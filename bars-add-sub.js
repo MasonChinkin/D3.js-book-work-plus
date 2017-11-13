@@ -83,49 +83,58 @@
   d3.select('p')
       .on('click', function () {
 
-          //COMPLETELY REFRESH DATASET
-          var newValues = barDataset.length;
-          barDataset = []; //Initialize empty array
-          for (var i = 0; i < newValues; i++) { //Loop X times
-              var newNumber = Math.round(Math.random() * 100); //Math.random creates almost 0 to almost 1
-              barDataset.push(newNumber); //Add new number to array
-          };
+          //ADD ONE DATUM TO barDataset
+          var newNumber = Math.round(Math.random() * maxValue); //Math.random creates almost 0 to almost 1
+          barDataset.push(newNumber); //Add new number to array
+
+          //UPDATE SCALES
+          x.domain(d3.range(barDataset.length));
+          y.domain([0, d3.max(barDataset)]);
 
           //Transition BARS
 
-          var bars = svg.selectAll("rect")
-              .data(barDataset)
+          var bars = svg.selectAll("rect") //SELECT
+              .data(barDataset);
 
-          bars.transition()
-              .delay(function (d, i) {
-                  return i / barDataset.length * 2000;
-              })
-              .duration(2000)
-              .ease(d3.easeElasticOut)
+          bars.enter() //ENTER
+              .append("rect")
+              .attr("x", w)
               .attr("y", function (d) {
                   return h - y(d);
               })
+              .attr("width", x.bandwidth())
               .attr("height", function (d) {
                   return y(d);
               })
               .attr('fill', function (d) {
                   return "rgb(0,0, " + Math.round(y(d)) + ")";
+              })
+              .merge(bars)
+              .transition()
+              .duration(500)
+              .attr('x', function (d, i) {
+                  return x(i)
+              })
+              .attr("y", function (d) {
+                  return h - y(d);
+              })
+              .attr("width", x.bandwidth())
+              .attr("height", function (d) {
+                  return y(d);
               });
 
-          //TRANSITION LABELS
+          //Exercise: Modify this code to add a new label each time a new bar is added!
+          //
 
           var text = svg.selectAll("text")
               .data(barDataset)
 
-          text.transition()
-              .delay(function (d, i) {
-                  return i / barDataset.length * 2000;
-              })
-              .duration(2000)
-              .ease(d3.easeElasticOut)
+          text.enter()
+              .append("text")
               .text(function (d) {
                   return d;
               })
+              .attr("x", w + (x.bandwidth() / 2))
               .attr("y", function (d) {
                   if (d >= 6) {
                       return h - y(d) + 14;
@@ -142,5 +151,21 @@
                       return "black"
                   }
               })
-              .attr('text-anchor', 'middle');
+              .merge(text)
+              .transition()
+              .duration(500)
+              .text(function (d) {
+                  return d;
+              })
+              .attr("x", function (d, i) {
+                  return x(i) + x.bandwidth() / 2;
+              })
+              .attr("y", function (d) {
+                  if (d >= 6) {
+                      return h - y(d) + 14;
+                  } else {
+                      return h - y(d) - 4
+                  }
+              })
+              .attr('text-anchor', 'middle')
       });
