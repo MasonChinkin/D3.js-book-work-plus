@@ -2,7 +2,7 @@
   var h = 300 //height variabelized
   var margin = 60
 
-  var maxValue = 100
+  var maxValue = 40
 
   /*var barDataset = {}; //Initialize empty array
   for (var i = 0; i < 30; i++) { //Loop X times
@@ -77,6 +77,35 @@
       })
       .attr('fill', function (d) {
           return "rgb(0,0, " + Math.round(y(d.value)) + ")";
+      })
+      .on('mouseover', function () {
+          d3.select(this)
+              .attr('fill', 'orange');
+
+          var xpos = parseFloat(d3.select(this).attr('x')) + x.bandwidth() / 2;
+          var ypos = parseFloat(d3.select(this).attr('y')) / 2 + h / 2;
+
+          //Update the tooltip position and value
+          d3.select('#tooltip')
+              .style("left", xpos + "px")
+              .style("top", ypos + "px")
+              .select("#value")
+              .text(function (d) {
+                  return d.value
+              });
+
+          //Show the tooltip
+          d3.select('#tooltip').classed("hidden", false);
+
+      })
+      .on('mouseout', function (d) {
+          d3.select(this)
+              .transition('orangeHover')
+              .duration(250)
+              .attr('fill', "rgb(0,0, " + Math.round(y(d.value)) + ")");
+      })
+      .on('click', function () {
+          sortBars()
       });
 
   //LABELS
@@ -104,7 +133,8 @@
               return "white"
           } else { return "black" }
       })
-      .attr('text-anchor', 'middle');
+      .attr('text-anchor', 'middle')
+      .style('pointer-events', 'none');
 
   //TRANSITION
 
@@ -121,9 +151,16 @@
                   key: lastKeyValue + 1,
                   value: newNumber //Add new number to array
               })
-          } else {
+          }
+          if (paragraphID == "remove") {
               barDataset.shift()
-          };
+          }
+
+
+          /*HAVING SORT BUTTON ISSUES...
+          if (paragraphID == "sort") {
+              sortBars()
+          }*/
 
           //UPDATE SCALES
           x.domain(d3.range(barDataset.length));
@@ -161,7 +198,10 @@
               })
               .attr("width", x.bandwidth())
               .attr("height", function (d) {
-                  return y(d.value);
+                  return y(d.value)
+              })
+              .attr('fill', function (d) {
+                  return "rgb(0,0, " + Math.round(y(d.value)) + ")";
               });
 
           bars.exit() //EXIT
@@ -171,8 +211,7 @@
               .attr('x', -x.bandwidth()) //EXIT STAGE LEFT
               .remove();
 
-          //Exercise: Modify this code to add a new label each time a new bar is added!
-          //
+          //TRANSITION LABELS
 
           var text = svg.selectAll("text")
               .data(barDataset, key)
@@ -225,3 +264,38 @@
               .attr('x', -x.bandwidth()) //EXIT STAGE LEFT
               .remove();
       });
+
+  //Defined functions
+  var sortOrder = false;
+  var sortBars = function () {
+
+      sortOrder = !sortOrder;
+
+      svg.selectAll("rect")
+          .sort(function (a, b) {
+              if (sortOrder) {
+                  return d3.ascending(a.value, b.value);
+              } else {
+                  return d3.descending(a.value, b.value);
+              }
+          })
+          .transition()
+          .duration(1000)
+          .attr("x", function (d, i) {
+              return x(i);
+          });
+
+      svg.selectAll("text")
+          .sort(function (a, b) {
+              if (sortOrder) {
+                  return d3.ascending(a.value, b.value);
+              } else {
+                  return d3.descending(a.value, b.value);
+              }
+          })
+          .transition()
+          .duration(1000)
+          .attr("x", function (d, i) {
+              return x(i) + x.bandwidth() / 2;
+          });
+  };
