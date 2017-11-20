@@ -25,9 +25,13 @@
 }
 
 .barLabel {
-  fill: white;
   text-anchor: middle;
   pointer-events: none;
   font-size: 11px;
-  font-family: sans-serif;
+  font-family: sans-serif
+  ;
+}
+
+body {
+  background-color:grey;">
 }
