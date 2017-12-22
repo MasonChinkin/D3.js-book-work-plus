@@ -4,7 +4,7 @@
   var margin = 60; //svg margin
 
   //properties of mouseout
-  var barMouseOut = function (d) {
+  var barMouseOut = function(d) {
       d3.select(this)
           .transition('orangeHover')
           .duration(250)
@@ -15,7 +15,7 @@
   };
 
   //properties of mouseover
-  var barMouseOver = function (d) {
+  var barMouseOver = function(d) {
       d3.select(this)
           .attr('fill', 'orange');
 
@@ -67,7 +67,7 @@
       { key: 19, value: 25 }
   ];
 
-  var key = function (d) {
+  var key = function(d) {
       return d.key;
   };
 
@@ -79,7 +79,7 @@
       .paddingInner(0.05);
 
   var y = d3.scaleLinear()
-      .domain([0, d3.max(barDataset, function (d) {
+      .domain([0, d3.max(barDataset, function(d) {
           return d.value;
       })])
       .range([0, h - margin]);
@@ -96,17 +96,17 @@
 
   bars.enter()
       .append("rect")
-      .attr("x", function (d, i) {
+      .attr("x", function(d, i) {
           return x(i);
       })
-      .attr("y", function (d) {
+      .attr("y", function(d) {
           return h - y(d.value);
       })
       .attr("width", x.bandwidth())
-      .attr("height", function (d) {
+      .attr("height", function(d) {
           return y(d.value);
       })
-      .attr('fill', function (d) {
+      .attr('fill', function(d) {
           return "rgb(0,0, " + Math.floor(y(d.value)) + ")";
       })
       .on('mouseover', barMouseOver)
@@ -119,19 +119,19 @@
 
   text.enter()
       .append("text")
-      .text(function (d) {
+      .text(function(d) {
           return d.value;
       })
-      .attr("x", function (d, i) {
+      .attr("x", function(d, i) {
           return x(i) + x.bandwidth() / 2;
       })
-      .attr("y", function (d) {
+      .attr("y", function(d) {
           if (d.value >= 6) {
               return h - y(d.value) + 14;
           } else { return h - y(d.value) - 4; }
       })
       .attr("class", "barLabel")
-      .attr("fill", function (d) {
+      .attr("fill", function(d) {
           if (d.value >= 6) {
               return "white";
           } else { return "black"; }
@@ -141,8 +141,8 @@
 
   function addBar() {
       var newNumber = Math.floor(Math.random() * maxValue);
-      var lastKeyNumber = d3.max(barDataset, function (d) {
-          return d.key
+      var lastKeyNumber = d3.max(barDataset, function(d) {
+          return d.key;
       });
       barDataset.push({
           key: lastKeyNumber + 1,
@@ -151,7 +151,7 @@
 
       //UPDATE SCALES
       x.domain(d3.range(barDataset.length));
-      y.domain([0, d3.max(barDataset, function (d) {
+      y.domain([0, d3.max(barDataset, function(d) {
           return d.value;
       })]);
 
@@ -163,14 +163,14 @@
       bars.enter() //ENTER
           .append("rect")
           .attr("x", w)
-          .attr("y", function (d) {
+          .attr("y", function(d) {
               return h - y(d.value);
           })
           .attr("width", x.bandwidth())
-          .attr("height", function (d) {
+          .attr("height", function(d) {
               return y(d.value);
           })
-          .attr('fill', function (d) {
+          .attr('fill', function(d) {
               return "rgb(0,0, " + Math.floor(y(d.value)) + ")";
           })
           .on('mouseover', barMouseOver)
@@ -178,17 +178,17 @@
           .merge(bars)
           .transition('barsAddBar')
           .duration(750)
-          .attr('x', function (d, i) {
+          .attr('x', function(d, i) {
               return x(i);
           })
-          .attr("y", function (d) {
+          .attr("y", function(d) {
               return h - y(d.value);
           })
           .attr("width", x.bandwidth())
-          .attr("height", function (d) {
+          .attr("height", function(d) {
               return y(d.value);
           })
-          .attr('fill', function (d) {
+          .attr('fill', function(d) {
               return "rgb(0,0, " + Math.floor(y(d.value)) + ")";
           });
 
@@ -199,11 +199,11 @@
 
       text.enter()
           .append("text")
-          .text(function (d) {
+          .text(function(d) {
               return d.value;
           })
           .attr("x", w + (x.bandwidth() / 2))
-          .attr("y", function (d) {
+          .attr("y", function(d) {
               if (d.value >= 6) {
                   return h - y(d.value) + 14;
               } else {
@@ -211,7 +211,7 @@
               }
           })
           .attr("class", "barLabel")
-          .attr("fill", function (d) {
+          .attr("fill", function(d) {
               if (d.value >= 6) {
                   return "white";
               } else {
@@ -221,13 +221,13 @@
           .merge(text)
           .transition('textAddBar')
           .duration(750)
-          .text(function (d) {
+          .text(function(d) {
               return d.value;
           })
-          .attr("x", function (d, i) {
+          .attr("x", function(d, i) {
               return x(i) + x.bandwidth() / 2;
           })
-          .attr("y", function (d) {
+          .attr("y", function(d) {
               if (d.value >= 6) {
                   return h - y(d.value) + 14;
               } else {
@@ -259,35 +259,35 @@
 
       //UPDATE SCALES
       x.domain(d3.range(barDataset.length));
-      y.domain([0, d3.max(barDataset, function (d) {
+      y.domain([0, d3.max(barDataset, function(d) {
           return d.value;
       })]);
 
       bars.transition('barsRemoveBar')
           .duration(750)
-          .attr('x', function (d, i) {
+          .attr('x', function(d, i) {
               return x(i);
           })
-          .attr("y", function (d) {
+          .attr("y", function(d) {
               return h - y(d.value);
           })
           .attr("width", x.bandwidth())
-          .attr("height", function (d) {
+          .attr("height", function(d) {
               return y(d.value);
           })
-          .attr('fill', function (d) {
+          .attr('fill', function(d) {
               return "rgb(0,0, " + Math.floor(y(d.value)) + ")";
           });
 
       text.transition('textRemoveBar')
           .duration(750)
-          .text(function (d) {
+          .text(function(d) {
               return d.value;
           })
-          .attr("x", function (d, i) {
+          .attr("x", function(d, i) {
               return x(i) + x.bandwidth() / 2;
           })
-          .attr("y", function (d) {
+          .attr("y", function(d) {
               if (d.value >= 6) {
                   return h - y(d.value) + 14;
               } else {
@@ -300,25 +300,25 @@
       sorted = true;
 
       svg.selectAll("rect")
-          .sort(function (a, b) {
+          .sort(function(a, b) {
               return d3.ascending(a.value, b.value);
           })
           .transition('sortBars')
           .duration(750)
-          .attr("x", function (d, i) {
+          .attr("x", function(d, i) {
               return x(i);
           });
 
       svg.selectAll("text")
-          .sort(function (a, b) {
+          .sort(function(a, b) {
               return d3.ascending(a.value, b.value);
           })
           .transition('sortText')
           .duration(750)
-          .attr("x", function (d, i) {
+          .attr("x", function(d, i) {
               return x(i) + x.bandwidth() / 2;
           });
-      barDataset.sort(function (a, b) {
+      barDataset.sort(function(a, b) {
           return a.value - b.value;
       });
   }

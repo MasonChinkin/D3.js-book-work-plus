@@ -1,14 +1,14 @@
-  var w = 600 //width variabelized
-  var h = 300 //height variabelized
-  var margin = 60
+  var w = 600; //width variabelized
+  var h = 300; //height variabelized
+  var margin = 60;
 
-  var maxValue = 100
+  var maxValue = 100;
 
   var barDataset = []; //Initialize empty array
   for (var i = 0; i < 30; i++) { //Loop X times
       var newNumber = Math.round(Math.random() * maxValue); //Math.random creates almost 0 to almost 1
       barDataset.push(newNumber); //Add new number to array
-  };
+  }
 
   //SCALES
 
@@ -29,51 +29,51 @@
       .attr("height", h);
 
   var bars = svg.selectAll("rect")
-      .data(barDataset)
+      .data(barDataset);
 
   bars.enter()
       .append("rect")
-      .attr("x", function (d, i) {
+      .attr("x", function(d, i) {
           return x(i);
       })
-      .attr("y", function (d) {
+      .attr("y", function(d) {
           return h - y(d);
       })
       .attr("width", x.bandwidth())
-      .attr("height", function (d) {
+      .attr("height", function(d) {
           return y(d);
       })
-      .attr('fill', function (d) {
+      .attr('fill', function(d) {
           return "rgb(0,0, " + Math.round(y(d)) + ")";
       });
 
   //LABELS
 
   var text = svg.selectAll("text")
-      .data(barDataset)
+      .data(barDataset);
 
   text.enter()
       .append("text")
-      .text(function (d) {
+      .text(function(d) {
           return d;
       })
-      .attr("x", function (d, i) {
+      .attr("x", function(d, i) {
           return x(i) + x.bandwidth() / 2;
       })
-      .attr("y", function (d) {
+      .attr("y", function(d) {
           if (d >= 6) {
               return h - y(d) + 14;
           } else {
-              return h - y(d) - 4
+              return h - y(d) - 4;
           }
       })
       .attr("font-family", "sans-serif")
       .attr("font-size", "11px")
-      .attr("fill", function (d) {
+      .attr("fill", function(d) {
           if (d >= 6) {
-              return "white"
+              return "white";
           } else {
-              return "black"
+              return "black";
           }
       })
       .attr('text-anchor', 'middle');
@@ -81,7 +81,7 @@
   //TRANSITION
 
   d3.select('p')
-      .on('click', function () {
+      .on('click', function() {
 
           //COMPLETELY REFRESH DATASET
           var newValues = barDataset.length;
@@ -89,57 +89,57 @@
           for (var i = 0; i < newValues; i++) { //Loop X times
               var newNumber = Math.round(Math.random() * 100); //Math.random creates almost 0 to almost 1
               barDataset.push(newNumber); //Add new number to array
-          };
+          }
 
           //Transition BARS
 
           var bars = svg.selectAll("rect")
-              .data(barDataset)
+              .data(barDataset);
 
           bars.transition()
-              .delay(function (d, i) {
+              .delay(function(d, i) {
                   return i / barDataset.length * 2000;
               })
               .duration(2000)
               .ease(d3.easeElasticOut)
-              .attr("y", function (d) {
+              .attr("y", function(d) {
                   return h - y(d);
               })
-              .attr("height", function (d) {
+              .attr("height", function(d) {
                   return y(d);
               })
-              .attr('fill', function (d) {
+              .attr('fill', function(d) {
                   return "rgb(0,0, " + Math.round(y(d)) + ")";
               });
 
           //TRANSITION LABELS
 
           var text = svg.selectAll("text")
-              .data(barDataset)
+              .data(barDataset);
 
           text.transition()
-              .delay(function (d, i) {
+              .delay(function(d, i) {
                   return i / barDataset.length * 2000;
               })
               .duration(2000)
               .ease(d3.easeElasticOut)
-              .text(function (d) {
+              .text(function(d) {
                   return d;
               })
-              .attr("y", function (d) {
+              .attr("y", function(d) {
                   if (d >= 6) {
                       return h - y(d) + 14;
                   } else {
-                      return h - y(d) - 4
+                      return h - y(d) - 4;
                   }
               })
               .attr("font-family", "sans-serif")
               .attr("font-size", "11px")
-              .attr("fill", function (d) {
+              .attr("fill", function(d) {
                   if (d >= 6) {
-                      return "white"
+                      return "white";
                   } else {
-                      return "black"
+                      return "black";
                   }
               })
               .attr('text-anchor', 'middle');

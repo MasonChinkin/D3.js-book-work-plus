@@ -8,14 +8,14 @@ d3.select("body").selectAll("p")
     .data(barDataset)
     .enter()
     .append("p")
-    .style("Color", function (d) {
+    .style("Color", function(d) {
         if (d > 10) {
             return "red";
         } else {
             return "silver"
         }
     })
-    .text(function (d) {
+    .text(function(d) {
         if (d < 15) {
             return "I can count up to " + d;
         }
