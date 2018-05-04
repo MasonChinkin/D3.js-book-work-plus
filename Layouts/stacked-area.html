@@ -70,7 +70,7 @@
     d3.csv('ev_sales_data.csv', rowConverter, function(data) {
 
         var dataset = data;
-        //console.log(dataset);
+        console.log(dataset);
 
         var keys = dataset.columns;
         keys.shift(); //remove first column name ('date')
@@ -78,7 +78,7 @@
 
         //data, stacked
         var series = stack(dataset);
-        //console.log(series);
+        console.log(series);
 
         //scales
         x = d3.scaleTime()

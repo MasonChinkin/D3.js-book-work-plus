@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>D3: Stacked area chart</title>
+    <script type="text/javascript" src="d3.js"></script>
+    <style type="text/css">
+    h1 {
+        font-family: Helvetica, sans-serif;
+        font-size: 18px;
+        font-weight: bold;
+    }
+
+    .area {
+        stroke: none;
+        cursor: pointer;
+    }
+
+    .area:hover {
+        fill: orange;
+    }
+
+    #backButton {
+        cursor: pointer;
+    }
+
+    #backButton rect {
+        fill: rgb(175, 240, 91);
+    }
+
+    #backButton text {
+        font-family: Helvetica, sans-serif;
+        font-weight: bold;
+        font-size: 14px;
+        fill: black;
+    }
+
+    #backButton:hover rect {
+        fill: rgb(26, 199, 194);
+    }
+
+    #backButton:hover text {
+        fill: white;
+    }
+
+    .unclickable {
+        pointer-events: none;
+    }
+    </style>
+</head>
+
+<body>
+    <h1>Contributions to Annual US GDP Growth</h1>
+    <script type="text/javascript">
+    //Width and height
+    var w = 600;
+    var h = 300;
+    var padding = 20;
+
+    //Tracks view state.  Possible values:
+    // 0 = default
+    // 1 = sub
+    var viewState = 0;
+
+    //Tracks most recently viewed/clicked 'type'.  Possible values:
+    //"Gross domestic product", "Gross private domestic investment", "Net exports of goods and services", "Government consumption and gross investment", or undefined
+    var viewType;
+
+    var dataset, xScale, yScale, xAxis, yAxis, area; //Empty
+
+    //Define key function, to be used when binding data
+    var key = function(d) {
+        return d.key;
+    };
+
+    //convert strings to dates
+    var parseTime = d3.timeParse('%Y');
+
+    //hardcoded bottom of yScale
+    var yBottom = -5
+
+    //hardcoded cushion for xSCale
+    var yTop = +2
+
+    //Set up stack methods
+    var catStack = d3.stack();
+    var subCatStack = d3.stack();
+
+    //Load in data
+    d3.request("growth_data_bookway.csv")
+        .mimeType("text/csv")
+        .get(function(response) {
+
+            //
+            // DATA PARSING
+            //
+
+            //Parse each row of the CSV into an array of string values
+            var rows = d3.csvParseRows(response.responseText);
+            //console.log(rows);
+
+            //Make dataset an empty array, so we can start adding values
+            dataset = [];
+
+            //Loop once for each row of the CSV, starting at row 2,
+            //since rows 0-1 contain only info, not values.
+            for (var i = 2; i < rows.length; i++) {
+
+                //Create a new object
+                dataset[i - 2] = {
+                    year: parseTime(rows[i][0]) //Make a new Date object for each year
+                };
+
+                //Loop once for each sub in this row (i.e., for this date)
+                for (var j = 1; j < rows[i].length; j++) {
+
+                    var subCat = rows[0][j]; //'Make' from 1st row in CSV
+                    var cat = rows[1][j]; //'Model' from 2nd row in CSV
+                    var subCatCat = rows[0][j] + " " + rows[1][j]; //'Make' + 'Model' will serve as our key
+                    var growth = rows[i][j]; //values for this year
+
+                    //convert data to int
+                    growth = parseFloat(growth);
+
+                    //Append a new object with data for this vehicle and month
+                    dataset[i - 2][subCat] = {
+                        "subCat": subCat,
+                        "cat": cat,
+                        "growth": growth
+                    };
+
+                }
+
+            }
+
+            //Log out the final state of dataset
+            //console.log(dataset);
+
+            //
+            //  CAT DATA SERIES
+            //
+
+            //The goal here is to make a totally separate data set that
+            //includes just yearly totals for each top category.
+
+            //Make typeDataset an empty array, so we can start adding values
+            catDataset = [];
+
+            //Loop once for each row of the CSV, starting at row 2,
+            //since rows 0-1 contain only info, not sales values.
+            for (var i = 2; i < rows.length; i++) {
+
+                //Create a new object
+                catDataset[i - 2] = {
+                    year: parseTime(rows[i][0]), //Make a new Date object for each year
+                    "Personal Consumption": 0,
+                    "Gross private domestic investment": 0,
+                    "Net Trade": 0,
+                    "Government consumption and gross investment": 0
+                };
+
+                //Loop once for each cat in this row (i.e., for this date)
+                for (var j = 1; j < rows[i].length; j++) {
+
+                    var cat = rows[1][j]; //'Type' from 3rd row in CSV
+                    var growth = rows[i][j]; //value for this year
+
+                    growth = parseFloat(growth);
+
+                    //Add values to existing sum
+                    catDataset[i - 2][cat] += growth;
+
+                    //
+                    //MUST FIX PRECISION ISSUE
+                    //
+
+                    //var len = growth.length;
+                    //while (len--) { growth[len] = growth[len].toFixed(2); };
+
+                }
+
+            }
+
+            //Log out the final state of dataset
+            //console.log(catDataset);
+
+            //
+            // STACKING
+            //
+
+            //Tell stack function where to find the keys
+            var cats = ["Personal Consumption", "Gross private domestic investment", "Net Trade", "Government consumption and gross investment"];
+
+            catStack.keys(cats) //.offset(d3.stackOffsetDiverging);
+
+            //Stack the data and log it out
+            var catSeries = catStack(catDataset);
+            console.log(catSeries);
+
+            //
+            // MAKE THE CHART
+            //
+
+            //Create scale functions
+            xScale = d3.scaleTime()
+                .domain([
+                    d3.min(dataset, function(d) { return d.year; }),
+                    d3.max(dataset, function(d) { return d.year; })
+                ])
+                .range([padding, w - padding * 2]);
+
+            yScale = d3.scaleLinear()
+                .domain([d3.min(catSeries, stackMin), d3.max(catSeries, stackMax)])
+                .range([h - padding, padding / 2])
+                .nice();
+
+            //Define axes
+            xAxis = d3.axisBottom()
+                .scale(xScale)
+                .ticks(10);
+
+            //Define Y axis
+            yAxis = d3.axisRight()
+                .scale(yScale)
+                .ticks(5);
+
+            //Define area generator
+            area = d3.area()
+                .x(function(d) { return xScale(d.data.year); })
+                .y0(function(d) { return yScale(d[0]); })
+                .y1(function(d) { return yScale(d[1]); });
+
+            //Create SVG element
+            var svg = d3.select("body")
+                .append("svg")
+                .attr("width", w)
+                .attr("height", h);
+
+            //Create areas for individual cats
+            svg.append("g")
+                .attr("id", "gdp");
+
+            //Create areas for TYPES
+            svg.append("g")
+                .attr("id", "cats")
+                .selectAll("path")
+                .data(catSeries, key)
+                .enter()
+                .append("path")
+                .attr("class", "area")
+                .attr("opacity", 1)
+                .attr("d", area)
+                .attr("fill", function(d, i) {
+                    return d3.schemeCategory10[i];
+                })
+                .attr('opacity', 0.5)
+                .on("click", function(d) {
+
+                    //Update view state
+                    viewState++;
+
+                    //
+                    // CATS
+                    //
+
+                    //Which type was clicked?
+                    var thisCat = d.key;
+                    console.log(thisCat)
+                    //Update this for later reference
+                    viewCat = thisCat;
+
+                    //Generate a new data set with all-zero values, 
+                    //except for this type's data
+                    thisCatDataset = [];
+
+                    for (var i = 0; i < catDataset.length; i++) {
+                        thisCatDataset[i] = {
+                            year: catDataset[i].year,
+                            "Personal Consumption": 0,
+                            "Gross private domestic investment": 0,
+                            "Net Trade": 0,
+                            "Government consumption and gross investment": 0,
+                            [thisCat]: catDataset[i][thisCat] //Overwrites the appropriate zero value above
+                        }
+                    }
+
+                    //console.log(thisCatDataset);
+
+                    //Stack the data (even though there's now just one "layer") and log it out
+                    var thisCatSeries = catStack(thisCatDataset);
+                    console.log(thisCatSeries);
+
+                    //Bind the new data set to paths, overwriting old bound data.
+                    var paths = d3.selectAll("#cats path")
+                        .data(thisCatSeries, key)
+                        .classed("unclickable", true);
+
+                    //Transition areas into new positions (i.e., thisType's area
+                    //will go to a zero baseline; all others will flatten out).
+                    //
+                    //Store this transition in a new variable for later reference.
+                    var areaTransitions = paths.transition()
+                        .duration(300)
+                        .attr("d", area);
+
+                    //Update scale
+                    yScale.domain([d3.min(thisCatSeries, stackMin), d3.max(thisCatSeries, stackMax)]);
+
+                    //Append this transition to the one already in progress
+                    //(from above).  Transition areas to newly updated scale.
+                    areaTransitions.transition()
+                        .delay(125)
+                        .on("start", function() {
+                            //Transition axis to new scale concurrently
+                            d3.select("g.axis.y")
+                                .transition()
+                                .duration(300)
+                                .call(yAxis);
+                        })
+                        .duration(300)
+                        .attr("d", area)
+                        .transition()
+                        .on("start", function() {
+                            //Make visible instantly, so 
+                            //revealed when this fades out
+                            d3.selectAll("g#gdp path")
+                                .attr("opacity", 1);
+                        })
+                        .duration(100)
+                        .attr("opacity", 0)
+                        .on("end", function(d, i) {
+                            //Reveal back button
+                            if (i == 0) {
+                                toggleBackButton();
+                            }
+                        });
+
+                    //
+                    // subCats
+                    //
+
+                    //Get all possible keys (make + model), but toss out 'date'
+                    var keysAll = Object.keys(dataset[0]).slice(1);
+                    // console.log(keysAll);
+
+                    //Loop once for each key, and save out just the ones of thisCat (e.g. Personal Consumption)
+                    var keysOfThisCat = [];
+                    for (var i = 0; i < keysAll.length; i++) {
+                        if (dataset[0][keysAll[i]].cat == thisCat) {
+                            keysOfThisCat.push(keysAll[i]);
+                        }
+                    }
+                    // console.log(keysOfThisType);
+
+                    //Give the new keys to the stack function
+                    subCatStack.keys(keysOfThisCat)
+                        .value(function value(d, key) {
+                            return d[key].growth;
+                        });
+
+                    //Stack the data and log it out
+                    var subCatSeries = subCatStack(dataset);
+                    // console.log(subCatSeries);
+
+                    //Create areas for individual VEHICLES
+                    svg.select("g#gdp")
+                        .selectAll("path")
+                        .data(subCatSeries, key)
+                        .enter()
+                        .append("path")
+                        .attr("class", "area")
+                        .attr("opacity", 0)
+                        .attr("d", area)
+                        .attr("fill", function(d, i) {
+                            return d3.schemeCategory10[i];
+                        })
+                        .append("title") //Make tooltip
+                        .text(function(d) {
+                            return d.key;
+                        });
+                })
+                .append("title") //Make tooltip
+                .text(function(d) {
+                    return d.key;
+                });
+
+
+            //Create axes
+            svg.append("g")
+                .attr("class", "axis x")
+                .attr("transform", "translate(0," + (h - padding) + ")")
+                .call(xAxis);
+
+            svg.append("g")
+                .attr("class", "axis y")
+                .attr("transform", "translate(" + (w - padding * 2) + ",0)")
+                .call(yAxis);
+
+            //Create back button
+            var backButton = svg.append("g")
+                .attr("id", "backButton")
+                .attr("opacity", 0) //Initially hidden
+                .classed("unclickable", true) //Initially not clickable
+                .attr("transform", "translate(" + xScale.range()[0] + "," + yScale.range()[1] + ")");
+
+            backButton.append("rect")
+                .attr("x", 0)
+                .attr("y", 0)
+                .attr("rx", 5)
+                .attr("rx", 5)
+                .attr("width", 70)
+                .attr("height", 30);
+
+            backButton.append("text")
+                .attr("x", 7)
+                .attr("y", 20)
+                .html("&larr; Back");
+
+            //Define click behavior
+            backButton.on("click", function() {
+
+                //Hide the back button, as it was just clicked
+                toggleBackButton();
+
+                viewState--;
+
+                //Re-bind type data and fade in types
+                var catAreaTransitions = d3.selectAll("g#cats path")
+                    .data(catSeries, key)
+                    .transition()
+                    .duration(125)
+                    .attr("opacity", 1)
+                    .on("end", function() {
+                        //Remove all vehicles once this fades in;
+                        //they will be recreated later as needed.
+                        d3.selectAll("g#gdp path").remove();
+                    });
+
+                //Set y scale back to original domain
+                yScale.domain([yBottom,
+                    d3.max(catDataset, function(d) {
+                        var sum = 0;
+                        //Loops once for each row, to calculate
+                        //the total (sum) of sales of all vehicles
+                        for (var i = 0; i < cats.length; i++) {
+                            sum += d[cats[i]];
+                        };
+                        return sum;
+                    }) + yTop
+                ]);
+
+                //Transition type areas and y scale back into place
+                catAreaTransitions.transition()
+                    .duration(300)
+                    .on("start", function() {
+                        //Transition axis to new scale concurrently
+                        d3.select("g.axis.y")
+                            .transition()
+                            .duration(300)
+                            .call(yAxis);
+                    })
+                    .attr("d", area)
+                    .on("end", function() {
+                        d3.select(this).classed("unclickable", false);
+                    });
+
+            });
+
+        });
+
+    var toggleBackButton = function() {
+
+        //Select the button
+        var backButton = d3.select("#backButton");
+
+        //Is the button hidden right now?
+        var hidden = backButton.classed("unclickable");
+
+        //Decide whether to reveal or hide it
+        if (hidden) {
+
+            //Reveal it
+
+            //Set up dynamic button text
+            var buttonText = "&larr; Back to ";
+
+            //Text varies by mode and type
+            if (viewState == 1) {
+                buttonText += "all types";
+            } else if (viewState == 2) {
+                buttonText += "all " + viewType + " vehicles";
+            }
+
+            //Set text
+            backButton.select("text").html(buttonText);
+
+            //Resize button depending on text width
+            var rectWidth = Math.round(backButton.select("text").node().getBBox().width + 16);
+            backButton.select("rect").attr("width", rectWidth);
+
+            //Fade button in
+            backButton.classed("unclickable", false)
+                .transition()
+                .duration(300)
+                .attr("opacity", 1);
+
+        } else {
+
+            //Hide it
+            backButton.classed("unclickable", true)
+                .transition()
+                .duration(125)
+                .attr("opacity", 0);
+
+        }
+
+    };
+
+    function stackMin(serie) {
+        return d3.min(serie, function(d) { return d[0]; });
+    }
+
+    function stackMax(serie) {
+        return d3.max(serie, function(d) { return d[1]; });
+    }
+    </script>
+</body>
+
+</html>

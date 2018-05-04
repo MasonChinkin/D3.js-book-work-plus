@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>D3: Stacked area chart</title>
+    <script type="text/javascript" src="d3.js"></script>
+    <style type="text/css">
+    h1 {
+        font-family: Helvetica, sans-serif;
+        font-size: 18px;
+        font-weight: bold;
+    }
+
+    .area {
+        stroke: none;
+        cursor: pointer;
+    }
+
+    .area:hover {
+        fill: orange;
+    }
+
+    #backButton {
+        cursor: pointer;
+    }
+
+    #backButton rect {
+        fill: rgb(175, 240, 91);
+    }
+
+    #backButton text {
+        font-family: Helvetica, sans-serif;
+        font-weight: bold;
+        font-size: 14px;
+        fill: black;
+    }
+
+    #backButton:hover rect {
+        fill: rgb(26, 199, 194);
+    }
+
+    #backButton:hover text {
+        fill: white;
+    }
+
+    .unclickable {
+        pointer-events: none;
+    }
+    </style>
+</head>
+
+<body>
+    <h1>Contributions to Annual US GDP Growth</h1>
+    <script type="text/javascript">
+    //Width and height
+    margin = { top: 20, right: 20, bottom: 20, left: 20 },
+        w = 1200 - margin.left - margin.right,
+        h = 500 - margin.top - margin.bottom;
+
+    var dataset, xScale, yScale, xAxis, yAxis, area; //Empty, for now
+
+    //Function for converting CSV values from strings to Dates and numbers
+    var rowConverter = function(d, i, cols) {
+
+        var parseTime = d3.timeParse('%Y'); //convert strings to dates
+
+        var row = {
+            year: parseTime(d.year), //make new date object for each year
+        };
+
+
+        for (var i = 1; i < cols.length; i++) { //loop for each growth type
+            var col = cols[i];
+            row[cols[i]] = +d[cols[i]]; //convert from string to int
+        }
+        return row;
+    };
+
+    //colors
+    var colors = d3.scaleOrdinal(d3.schemeCategory10);
+
+    //define stack
+    var stack = d3.stack() //.order(d3.stackOrderDescending);
+
+    //load data
+    d3.csv('growth_data_simple.csv', rowConverter, function(error, data) {
+        if (error) throw error;
+
+        var dataset = data;
+        //console.log(dataset);
+
+        var keys = dataset.columns.slice(1);
+        stack.keys(keys);
+
+        //data, stacked
+        var series = stack(dataset);
+        //console.log(series);
+
+        //scales
+        x = d3.scaleTime()
+            .domain(d3.extent(dataset, function(d) { return d.year }))
+            .range([margin.left, width - margin.right]);
+
+        y = d3.scaleLinear()
+            .domain([d3.min(catSeries, stackMin), d3.max(catSeries, stackMax)])
+            .range([height - margin.bottom, margin.top])
+            .nice();
+
+        //Define axes
+        xAxis = d3.axisBottom()
+            .scale(xScale)
+            .tickValues(xScale.domain().filter(function(d, i) { return !(i % 10) }))
+            .tickFormat(d3.timeFormat('%Y'))
+            .tickSizeOuter(0);
+
+        //Define right Y axis
+        yAxisR = d3.axisRight()
+            .scale(yScale)
+            .ticks(5)
+            .tickSizeOuter(0);
+
+        //Define left Y axis
+        yAxisL = d3.axisLeft()
+            .scale(yScale)
+            .ticks(5)
+            .tickSizeOuter(0);
+
+        //create svg
+        var svg = d3.select('body')
+            .append('svg')
+            .attr('width', w)
+            .attr('height', h);
+
+        //group data rows
+        var groups = svg.selectAll('g')
+            .data(series)
+            .enter()
+            .append('g')
+            .style('fill', function(d, i) {
+                return colors(i);
+            });
+
+        //add rect for each data value
+
+        var rects = groups.selectAll('rect')
+            .data(function(d) { return d; })
+            .enter()
+            .append('rect')
+            .attr('x', function(d, i) {
+                return x(i);
+            })
+            .attr('y', function(d) {
+                return y(d[1]);
+            })
+            .attr('height', function(d) {
+                return y(d[0]) - y(d[1]);
+            })
+            .attr('width', x.bandwidth())
+            .append('title') //for tooltip
+            .text(function(d) { //for tooltip
+                return d.key; //for tooltip
+            }); //for tooltip
+
+        //create axes
+        svg.append('g')
+            .attr('class', 'axis')
+            .attr('transform', 'translate(0,' + height + ')')
+            .call(xAxis);
+
+        svg.append('g')
+            .attr('class', 'axis')
+            .attr('transform', 'translate(' + width + ',0)')
+            .call(yAxisL);
+
+        svg.append('g')
+            .attr('class', 'axis')
+            .attr('transform', 'translate(' + width + ',0)')
+            .call(yAxisR);
+    });
+
+    function stackMin(serie) {
+        return d3.min(serie, function(d) { return d[0]; });
+    }
+
+    function stackMax(serie) {
+        return d3.max(serie, function(d) { return d[1]; });
+    }
+    </script>
+</body>
+
+</html>
