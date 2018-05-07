@@ -18,13 +18,14 @@
         pointer-events: none;
     }
 
-    .legends {
-        margin-right: 1em;
-        font-size: 22px;
-    }
-
     .line:hover {
         stroke: yellow;
+    }
+
+    .textselected {
+        font: 18px arial;
+        pointer-events: none;
+        text-anchor: start;
     }
 
     .indivBar:hover {
@@ -77,6 +78,7 @@
 <body>
     <h1>Contributions to Annual US GDP Growth: 1950-2017</h1>
     <div class="legend">
+        <div class="legend"></div>
     </div>
     <script type="text/javascript">
     //Width and height
@@ -281,25 +283,49 @@
                     (h * 0.925) + ") rotate(0)")
                 .style('pointer-events', 'none');
 
-            //Legend
-            //var legendVals = dataset.columns.slice(1);
-
-            var legendVals = ["Personal Consumption", "Gross private domestic investment", "Net Trade", "Government consumption and gross investment"]
-
-            var legend = d3.select('.legend').selectAll("legend")
-                .data(legendVals)
-                .enter()
-                .append("div")
-                .attr("class", "legends")
-                .html(function(d, i) { return d })
-                .style("color", function(d, i) { return colors(i) })
-                .style("font-weight", "bold")
-                .style('pointer-events', 'none');
-
             // Define the div for the tooltip
             var tooltipDiv = d3.select("body").append("div")
                 .attr("class", "tooltip")
                 .style("opacity", 0);
+
+            var legendVals = ["Personal Consumption", "Gross private domestic investment", "Net Trade", "Government consumption and gross investment"]
+
+            //LEGEND
+
+            wLegend = w * 0.6
+            hLegend = h * 0.05
+
+            var legend = svg.selectAll('.legend')
+                .data(legendVals)
+                .enter().append('g')
+                .attr("class", "legends")
+                .attr("transform", function(d, i) {
+                    {
+                        return "translate(0," + i * 20 + ")"
+                    }
+                })
+
+            legend.append('rect')
+                .attr("x", wLegend)
+                .attr("y", hLegend)
+                .attr("width", 12)
+                .attr("height", 12)
+                .style("fill", function(d, i) {
+                    return colors(i)
+                })
+
+            legend.append('text')
+                .attr("x", wLegend + 20)
+                .attr("y", hLegend + 12)
+                //.attr("dy", ".35em")
+                .text(function(d, i) {
+                    return d
+                })
+                .attr("class", "textselected")
+
+            //Legend
+            //var legendVals = dataset.columns.slice(1);
+
         });
     });
 
