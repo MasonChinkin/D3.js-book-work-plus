@@ -32,7 +32,7 @@
 
     //data, stacked
     var series = stack(dataset);
-    console.log(series);
+    //console.log(series);
 
     //scales
     var x = d3.scaleBand()
@@ -59,17 +59,18 @@
 
 
     //group data rows
-    var groups = svg.selectAll('g')
+    var bars = svg.selectAll('g')
         .data(series)
         .enter()
         .append('g')
+        .attr('class', 'remove')
         .style('fill', function(d, i) {
             return colors(i);
         });
 
     //add rect for each data value
 
-    var rects = groups.selectAll('rect')
+    var rects = bars.selectAll('rect')
         .data(function(d) { return d; })
         .enter()
         .append('rect')
@@ -82,7 +83,45 @@
         .attr('height', function(d) {
             return y(d[0]) - y(d[1]);
         })
-        .attr('width', x.bandwidth());
+        .attr('width', x.bandwidth())
+        .on('click', function(d, i) {
+
+            svg.selectAll('.remove').exit().remove();
+            /* var newDataset = [
+                { apples: 5, oranges: 0, grapes: 0 },
+                { apples: 4, oranges: 0, grapes: 0 },
+                { apples: 2, oranges: 0, grapes: 0 },
+                { apples: 7, oranges: 0, grapes: 0 },
+                { apples: 23, oranges: 0, grapes: 0 }
+            ];
+
+            //data, stacked
+            var newSeries = stack(newDataset);
+            console.log(newSeries);
+
+            var bars = svg.selectAll('g')
+                .data(newSeries)
+
+            bars.enter().append('rect');
+
+            bars.transition()
+            selectAll('rect')
+                .data(function(d) { return d; })
+                .enter()
+                .append('rect')
+                .attr('x', function(d, i) {
+                    return x(i);
+                })
+                .attr('y', function(d) {
+                    return h - (y(d[0]) - y(d[1]));
+                })
+                .attr('height', function(d) {
+                    return y(d[0]) - y(d[1]);
+                })
+                .attr('width', x.bandwidth());
+
+            bars.exit().remove();*/
+        });
     </script>
 </body>
 
